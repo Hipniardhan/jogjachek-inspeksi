@@ -7,6 +7,8 @@
     const fileSlotSelect = document.getElementById('fileSlotSelect');
     const draftState = document.getElementById('draftState');
     const ACTIVE_FILE_SLOT_KEY = 'rtech-inspection-active-file-slot';
+    const DAILY_RECAP_STORAGE_KEY = 'rtech-inspection-daily-recap';
+    const DAILY_RECAP_MONTHLY_RESET_KEY = 'rtech-inspection-recap-last-monthly-reset';
     const fileSlots = ['1', '2', '3'];
     const annotationRadius = 4;
     const annotationTextOffset = 16;
@@ -27,6 +29,7 @@
     let saveTimer = null;
     let pendingNumberInput = null;
     let toolbarViewportFrame = null;
+    let dailyRecap = [];
     const checklistClickState = new WeakMap();
     const isStandalone =
         window.matchMedia('(display-mode: standalone)').matches ||
@@ -841,6 +844,202 @@
         updateEstimateGrandTotal(false);
     }
 
+    function createDailyRecapId() {
+        return `recap-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function formatDateForRecap(date = new Date()) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+
+        return `${day}/${month}/${year}`;
+    }
+
+    function getMonthlyResetKey(date = new Date()) {
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+
+        return `${date.getFullYear()}-${month}`;
+    }
+
+    function loadDailyRecap() {
+        try {
+            const storedRecap = JSON.parse(
+                localStorage.getItem(DAILY_RECAP_STORAGE_KEY) || '[]'
+            );
+
+            dailyRecap = Array.isArray(storedRecap)
+                ? storedRecap.map((entry) => ({
+                    id: String(entry.id || createDailyRecapId()),
+                    unitName: String(entry.unitName || ''),
+                    inspectionDate: String(entry.inspectionDate || ''),
+                    location: String(entry.location || ''),
+                }))
+                : [];
+        } catch (error) {
+            dailyRecap = [];
+        }
+    }
+
+    function saveDailyRecap() {
+        localStorage.setItem(DAILY_RECAP_STORAGE_KEY, JSON.stringify(dailyRecap));
+    }
+
+    function renderDailyRecap() {
+        const recapBody = document.getElementById('dailyRecapBody');
+
+        if (!recapBody) {
+            return;
+        }
+
+        recapBody.textContent = '';
+
+        dailyRecap.forEach((entry, index) => {
+            const row = document.createElement('tr');
+            const numberCell = document.createElement('td');
+            const unitCell = document.createElement('td');
+            const dateCell = document.createElement('td');
+            const locationCell = document.createElement('td');
+            const locationInput = document.createElement('input');
+
+            numberCell.textContent = String(index + 1);
+            unitCell.textContent = entry.unitName;
+            dateCell.textContent = entry.inspectionDate;
+
+            locationInput.type = 'text';
+            locationInput.className = 'daily-recap-location';
+            locationInput.value = entry.location;
+            locationInput.setAttribute('aria-label', `Lokasi rekap ${index + 1}`);
+            locationInput.addEventListener('input', () => {
+                entry.location = locationInput.value;
+                saveDailyRecap();
+            });
+
+            locationCell.appendChild(locationInput);
+            row.appendChild(numberCell);
+            row.appendChild(unitCell);
+            row.appendChild(dateCell);
+            row.appendChild(locationCell);
+            recapBody.appendChild(row);
+        });
+    }
+
+    function addCurrentInspectionToRecap({ quiet = false } = {}) {
+        const unitField = form.querySelector('[name="merk_tipe"]');
+        const inspectionDateField = form.querySelector('[name="waktu_inspeksi"]');
+        const unitName = String(unitField?.value || '').trim();
+
+        if (!unitName) {
+            if (!quiet) {
+                window.alert('Nama Unit belum diisi.');
+            }
+
+            return false;
+        }
+
+        dailyRecap.push({
+            id: createDailyRecapId(),
+            unitName,
+            inspectionDate:
+                String(inspectionDateField?.value || '').trim() ||
+                formatDateForRecap(),
+            location: '',
+        });
+
+        saveDailyRecap();
+        renderDailyRecap();
+        return true;
+    }
+
+    function getDraftDataBySlot(slot) {
+        const raw = localStorage.getItem(getDraftStorageKey(slot));
+
+        if (!raw) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(raw);
+        } catch (error) {
+            console.error('Invalid draft data for slot', slot, error);
+            return null;
+        }
+    }
+
+    function getFieldValueFromDraftData(draftData, fieldName) {
+        if (!draftData) {
+            return '';
+        }
+
+        if (draftData.fields && fieldName in draftData.fields) {
+            return String(draftData.fields[fieldName] || '').trim();
+        }
+
+        if (fieldName in draftData) {
+            return String(draftData[fieldName] || '').trim();
+        }
+
+        return '';
+    }
+
+    function addAllFileSlotsToRecap() {
+        saveDraft(getActiveFileSlot());
+        loadDailyRecap();
+
+        const recapRows = [];
+
+        fileSlots.forEach((slot) => {
+            const draftData = getDraftDataBySlot(slot);
+
+            if (!draftData) {
+                return;
+            }
+
+            const unitName = getFieldValueFromDraftData(draftData, 'merk_tipe');
+
+            if (!unitName) {
+                return;
+            }
+
+            recapRows.push({
+                id: `${Date.now().toString(36)}-${slot}-${Math.random().toString(36).slice(2, 8)}`,
+                unitName,
+                inspectionDate:
+                    getFieldValueFromDraftData(draftData, 'waktu_inspeksi') ||
+                    formatDateForRecap(),
+                location: '',
+            });
+        });
+
+        if (recapRows.length === 0) {
+            return 0;
+        }
+
+        dailyRecap = dailyRecap.concat(recapRows);
+        saveDailyRecap();
+        renderDailyRecap();
+
+        return recapRows.length;
+    }
+
+    function runMonthlyRecapReset() {
+        const now = new Date();
+        const monthlyResetKey = getMonthlyResetKey(now);
+        const lastMonthlyReset =
+            localStorage.getItem(DAILY_RECAP_MONTHLY_RESET_KEY);
+
+        if (
+            now.getDate() !== 1 ||
+            now.getHours() < 9 ||
+            lastMonthlyReset === monthlyResetKey
+        ) {
+            return;
+        }
+
+        dailyRecap = [];
+        localStorage.removeItem(DAILY_RECAP_STORAGE_KEY);
+        localStorage.setItem(DAILY_RECAP_MONTHLY_RESET_KEY, monthlyResetKey);
+    }
     function getActiveFileSlot() {
         const slot = localStorage.getItem(ACTIVE_FILE_SLOT_KEY);
 
@@ -1216,15 +1415,7 @@
         });
     });
 
-    document.getElementById('undoMark')?.addEventListener('click', () => {
-        undoLastChange();
-    });
-
-    document.getElementById('resetForm').addEventListener('click', () => {
-        if (!window.confirm('Reset semua isi form dan semua file?')) {
-            return;
-        }
-
+    function performFullReset() {
         clearTimeout(saveTimer);
         saveTimer = null;
 
@@ -1242,8 +1433,60 @@
         setMode('mark');
         resetUndoHistory();
         draftState.textContent = 'Semua file kosong';
+    }
+
+    function openResetChoiceModal() {
+        document.getElementById('resetChoiceModal')?.removeAttribute('hidden');
+    }
+
+    function closeResetChoiceModal() {
+        document.getElementById('resetChoiceModal')?.setAttribute('hidden', '');
+    }
+    document.getElementById('undoMark')?.addEventListener('click', () => {
+        undoLastChange();
     });
 
+    document.getElementById('toggleDailyRecap')?.addEventListener('click', () => {
+        const recapPanel = document.getElementById('dailyRecapPanel');
+        const toggleButton = document.getElementById('toggleDailyRecap');
+
+        if (!recapPanel) {
+            return;
+        }
+
+        const willOpen = recapPanel.hasAttribute('hidden');
+        recapPanel.toggleAttribute('hidden', !willOpen);
+        toggleButton?.classList.toggle('active', willOpen);
+    });
+
+    document.getElementById('resetForm').addEventListener('click', () => {
+        openResetChoiceModal();
+    });
+
+    document.getElementById('saveAndResetButton')?.addEventListener('click', (event) => {
+        const saveAndResetButton = event.currentTarget;
+
+        saveAndResetButton.disabled = true;
+
+        try {
+            const addedCount = addAllFileSlotsToRecap();
+
+            if (addedCount === 0) {
+                window.alert('Tidak ada data file yang memiliki Nama Unit.');
+                return;
+            }
+
+            closeResetChoiceModal();
+            performFullReset();
+        } finally {
+            saveAndResetButton.disabled = false;
+        }
+    });
+
+    document.getElementById('resetOnlyButton')?.addEventListener('click', () => {
+        closeResetChoiceModal();
+        performFullReset();
+    });
     document.getElementById('printPage').addEventListener('click', () => {
         commitPendingNumberInput();
         autoGrowAll();
@@ -1409,6 +1652,9 @@
 
     initRupiahInputs();
     initEstimateAutoTotal();
+    loadDailyRecap();
+    runMonthlyRecapReset();
+    renderDailyRecap();
     loadDraft(activeSlot);
     updateEstimateGrandTotal(false);
     formatAllRupiahInputs();

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rtech-inspection-v18';
+const CACHE_NAME = 'rtech-inspection-v22';
 const IS_LOCALHOST =
     ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
 

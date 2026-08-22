@@ -32,6 +32,34 @@
                 <button type="button" class="tool-btn" data-mark-mode="erase">Hapus</button>
                 <button type="button" class="tool-btn" id="resetForm">Reset</button>
                 <button type="button" class="tool-btn primary" id="printPage">Print</button>
+                <button type="button" class="tool-btn" id="toggleDailyRecap">Hasil Rekap</button>
+            </div>
+        </div>
+    </div>
+    <div id="dailyRecapPanel" class="daily-recap-panel no-print" hidden>
+        <div class="daily-recap-header">
+            <h2>Tabel Hasil Rekap Inspeksi Harian</h2>
+        </div>
+        <div class="daily-recap-table-wrap">
+            <table class="daily-recap-table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Unit</th>
+                        <th>Tanggal Inspeksi</th>
+                        <th>Lokasi</th>
+                    </tr>
+                </thead>
+                <tbody id="dailyRecapBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div id="resetChoiceModal" class="reset-choice-modal no-print" hidden>
+        <div class="reset-choice-dialog">
+            <p>Simpan data unit ini ke Hasil Rekap sebelum reset?</p>
+            <div class="reset-choice-actions">
+                <button type="button" id="saveAndResetButton">Simpan dan Reset</button>
+                <button type="button" id="resetOnlyButton">Reset Saja</button>
             </div>
         </div>
     </div>
