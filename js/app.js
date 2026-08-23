@@ -894,34 +894,145 @@
 
         recapBody.textContent = '';
 
+        if (dailyRecap.length === 0) {
+            const emptyRow = document.createElement('tr');
+            const emptyCell = document.createElement('td');
+
+            emptyCell.colSpan = 5;
+            emptyCell.className = 'daily-recap-empty';
+            emptyCell.textContent = 'Belum ada data rekap.';
+            emptyRow.appendChild(emptyCell);
+            recapBody.appendChild(emptyRow);
+            return;
+        }
+
         dailyRecap.forEach((entry, index) => {
             const row = document.createElement('tr');
+            const selectCell = document.createElement('td');
             const numberCell = document.createElement('td');
             const unitCell = document.createElement('td');
             const dateCell = document.createElement('td');
             const locationCell = document.createElement('td');
+            const selectInput = document.createElement('input');
+            const unitInput = document.createElement('input');
+            const dateInput = document.createElement('input');
             const locationInput = document.createElement('input');
 
+            selectCell.className = 'daily-recap-select-cell';
+            selectInput.type = 'checkbox';
+            selectInput.className = 'daily-recap-select';
+            selectInput.dataset.recapId = entry.id;
+            selectInput.setAttribute('aria-label', `Pilih rekap ${index + 1}`);
+            selectCell.appendChild(selectInput);
+
+            numberCell.className = 'daily-recap-no';
             numberCell.textContent = String(index + 1);
-            unitCell.textContent = entry.unitName;
-            dateCell.textContent = entry.inspectionDate;
+
+            unitInput.type = 'text';
+            unitInput.className = 'daily-recap-input daily-recap-unit-input';
+            unitInput.dataset.recapId = entry.id;
+            unitInput.value = entry.unitName;
+            unitInput.setAttribute('aria-label', `Nama Unit rekap ${index + 1}`);
+
+            dateInput.type = 'text';
+            dateInput.className = 'daily-recap-input daily-recap-date-input';
+            dateInput.dataset.recapId = entry.id;
+            dateInput.value = entry.inspectionDate;
+            dateInput.setAttribute('aria-label', `Tanggal Inspeksi rekap ${index + 1}`);
 
             locationInput.type = 'text';
-            locationInput.className = 'daily-recap-location';
+            locationInput.className = 'daily-recap-input daily-recap-location-input';
+            locationInput.dataset.recapId = entry.id;
             locationInput.value = entry.location;
             locationInput.setAttribute('aria-label', `Lokasi rekap ${index + 1}`);
-            locationInput.addEventListener('input', () => {
-                entry.location = locationInput.value;
-                saveDailyRecap();
-            });
 
+            unitCell.appendChild(unitInput);
+            dateCell.appendChild(dateInput);
             locationCell.appendChild(locationInput);
+            row.appendChild(selectCell);
             row.appendChild(numberCell);
             row.appendChild(unitCell);
             row.appendChild(dateCell);
             row.appendChild(locationCell);
             recapBody.appendChild(row);
         });
+    }
+
+    function createRecapId() {
+        return createDailyRecapId();
+    }
+
+    function hasEmptyRecapUnitName() {
+        loadDailyRecap();
+
+        return dailyRecap.some((item) => !String(item.unitName || '').trim());
+    }
+
+    function addManualRecapRow() {
+        loadDailyRecap();
+
+        if (hasEmptyRecapUnitName()) {
+            window.alert('Isi Nama Unit pada baris kosong terlebih dahulu.');
+            return;
+        }
+
+        const newRow = {
+            id: createRecapId(),
+            unitName: '',
+            inspectionDate: formatDateForRecap(),
+            location: '',
+        };
+
+        dailyRecap.push(newRow);
+        saveDailyRecap();
+        renderDailyRecap();
+
+        window.requestAnimationFrame(() => {
+            const input = document.querySelector(
+                `.daily-recap-unit-input[data-recap-id="${CSS.escape(newRow.id)}"]`
+            );
+
+            input?.focus();
+        });
+    }
+
+    function deleteSelectedRecapRows() {
+        const selectedInputs = document.querySelectorAll(
+            '.daily-recap-select:checked'
+        );
+
+        if (selectedInputs.length === 0) {
+            window.alert('Pilih baris rekap yang ingin dihapus.');
+            return;
+        }
+
+        const selectedIds = new Set(
+            Array.from(selectedInputs).map((input) => input.dataset.recapId)
+        );
+
+        loadDailyRecap();
+        dailyRecap = dailyRecap.filter((item) => !selectedIds.has(item.id));
+        saveDailyRecap();
+        renderDailyRecap();
+    }
+
+    function updateDailyRecapField(input) {
+        const recapId = input.dataset.recapId;
+        const item = dailyRecap.find((entry) => entry.id === recapId);
+
+        if (!item) {
+            return;
+        }
+
+        if (input.classList.contains('daily-recap-unit-input')) {
+            item.unitName = input.value;
+        } else if (input.classList.contains('daily-recap-date-input')) {
+            item.inspectionDate = input.value;
+        } else if (input.classList.contains('daily-recap-location-input')) {
+            item.location = input.value;
+        }
+
+        saveDailyRecap();
     }
 
     function addCurrentInspectionToRecap({ quiet = false } = {}) {
@@ -1457,6 +1568,26 @@
         const willOpen = recapPanel.hasAttribute('hidden');
         recapPanel.toggleAttribute('hidden', !willOpen);
         toggleButton?.classList.toggle('active', willOpen);
+    });
+
+    document.getElementById('addRecapRowButton')?.addEventListener(
+        'click',
+        addManualRecapRow
+    );
+
+    document.getElementById('deleteRecapRowButton')?.addEventListener(
+        'click',
+        deleteSelectedRecapRows
+    );
+
+    document.getElementById('dailyRecapBody')?.addEventListener('input', (event) => {
+        const input = event.target instanceof HTMLInputElement ? event.target : null;
+
+        if (!input || !input.classList.contains('daily-recap-input')) {
+            return;
+        }
+
+        updateDailyRecapField(input);
     });
 
     document.getElementById('resetForm').addEventListener('click', () => {

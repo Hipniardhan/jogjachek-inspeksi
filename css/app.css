@@ -105,7 +105,7 @@ button {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .daily-recap-panel h2 {
@@ -145,14 +145,64 @@ button {
     font-weight: 700;
 }
 
-.daily-recap-location {
+.daily-recap-input {
     width: 100%;
     min-width: 0;
     border: 1px solid #cbd5e1;
     border-radius: 4px;
     padding: 6px 8px;
     background: #fff;
+    font: inherit;
 }
+
+.daily-recap-input:focus {
+    outline: 2px solid rgba(17, 24, 39, 0.18);
+    border-color: #111827;
+}
+.daily-recap-title {
+    margin: 0;
+}
+
+.daily-recap-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.recap-action-btn {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    border: 1px solid #111827;
+    border-radius: 4px;
+    background: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.recap-action-btn:hover {
+    background: #f3f4f6;
+}
+
+.daily-recap-select-cell {
+    width: 10mm;
+    text-align: center;
+}
+
+.daily-recap-select {
+    cursor: pointer;
+}
+
+.daily-recap-no {
+    width: 52px;
+    text-align: center;
+}
+
+.daily-recap-empty {
+    color: #64748b;
+    text-align: center;
+}
+
 .reset-choice-modal {
     position: fixed;
     inset: 0;

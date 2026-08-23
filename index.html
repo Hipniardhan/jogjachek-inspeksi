@@ -38,12 +38,17 @@
     </div>
     <div id="dailyRecapPanel" class="daily-recap-panel no-print" hidden>
         <div class="daily-recap-header">
-            <h2>Tabel Hasil Rekap Inspeksi Harian</h2>
+            <h2 class="daily-recap-title">Tabel Hasil Rekap Inspeksi Harian</h2>
+            <div class="daily-recap-actions">
+                <button type="button" id="addRecapRowButton" class="recap-action-btn">+</button>
+                <button type="button" id="deleteRecapRowButton" class="recap-action-btn">-</button>
+            </div>
         </div>
         <div class="daily-recap-table-wrap">
             <table class="daily-recap-table">
                 <thead>
                     <tr>
+                        <th>Pilih</th>
                         <th>No</th>
                         <th>Nama Unit</th>
                         <th>Tanggal Inspeksi</th>
