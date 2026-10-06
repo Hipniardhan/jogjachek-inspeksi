@@ -1,4 +1,4 @@
-﻿# Oto Inspeksi Report - Static GitHub Pages
+﻿# Jogja Check Report - Static GitHub Pages
 
 Versi statis dari aplikasi Form Inspeksi Kendaraan Oto Inspeksi.
 
