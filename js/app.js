@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
     const toolbarViewportAnchor =
         document.getElementById('toolbarViewportAnchor');
     const toolbarElement =
@@ -6,9 +6,9 @@
     const form = document.getElementById('inspectionForm');
     const fileSlotSelect = document.getElementById('fileSlotSelect');
     const draftState = document.getElementById('draftState');
-    const ACTIVE_FILE_SLOT_KEY = 'rtech-inspection-active-file-slot';
-    const DAILY_RECAP_STORAGE_KEY = 'rtech-inspection-daily-recap';
-    const DAILY_RECAP_MONTHLY_RESET_KEY = 'rtech-inspection-recap-last-monthly-reset';
+    const ACTIVE_FILE_SLOT_KEY = 'oto-inspeksi-active-file-slot';
+    const DAILY_RECAP_STORAGE_KEY = 'oto-inspeksi-daily-recap';
+    const DAILY_RECAP_MONTHLY_RESET_KEY = 'oto-inspeksi-recap-last-monthly-reset';
     const fileSlots = ['1', '2', '3'];
     const annotationRadius = 4;
     const annotationTextOffset = 16;
@@ -1166,7 +1166,7 @@
     function getDraftStorageKey(slot = getActiveFileSlot()) {
         const targetSlot = fileSlots.includes(slot) ? slot : '1';
 
-        return `rtech-inspection-draft-file-${targetSlot}`;
+        return `oto-inspeksi-draft-file-${targetSlot}`;
     }
 
     function applyDraft(draft) {
@@ -1791,3 +1791,4 @@
     formatAllRupiahInputs();
     autoGrowAll();
 })();
+

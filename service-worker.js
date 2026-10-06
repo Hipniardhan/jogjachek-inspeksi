@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rtech-inspection-v23';
+﻿const CACHE_NAME = 'oto-inspeksi-v24';
 const IS_LOCALHOST =
     ['localhost', '127.0.0.1', '::1'].includes(self.location.hostname);
 
@@ -22,7 +22,6 @@ const APP_ASSETS = [
     './assets/inspection/pdf-image-39.jpg',
     './assets/inspection/pdf-image-40.jpg',
     './assets/inspection/red-circle.svg',
-    './assets/inspection/rtech-logo-pdf.png',
     './assets/inspection/signature-tama.svg'
 ];
 
@@ -96,3 +95,4 @@ self.addEventListener('fetch', (event) => {
         })
     );
 });
+
